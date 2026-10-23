@@ -1,50 +1,18 @@
-# DADA2 — Agentic RAG over SEC filings
-
-**Fill in both sections at the bottom before you submit.** Keep the deployed
-app line exactly in this form; it is how your app gets found and graded.
-
-## Getting started
-
-There is no separate spec. The instructions are in the notebooks, and
-`DADA2_00_Start_Here.ipynb` is the one to open first: it explains the
-assignment, the setup, the grading, and what each of the four notebooks after
-it asks for. Work through them in order.
-
-Get the files the same way as every class day: pull, then work in a copy:
-
-```bash
-cd lecture-files
-git pull
-cd ..
-cp -r lecture-files/DADA2 DADA2     # work in the copy, not in lecture-files/
-cd DADA2
-cp example.env .env                  # then fill in your keys
-```
-
-Then open `DADA2_00_Start_Here.ipynb` from your `DADA2` copy and run its
-setup check.
-
-Deploying is `DEPLOY.md`.
-
----
-
-## Submission
+# DADA2 — Agentic RAG over SEC Filings
 
 ```
-Deployed app: <your Render URL>
+Deployed app: https://triageql.onrender.com
 ```
 
-ADD YOUR NAME TO YOUR RENDER PROJECT SO THE LINK CAN BE PERSONALIZED.
+## Overview
 
-PLEASE ENSURE YOUR URL WORKS BY TESTING IT IN INCOGNITO MODE.
+This project answers questions about nine 10-K filings from NVIDIA, AMD and Micron, three fiscal years per company, split into 27 Business, Risk Factors and MD&A sections. The notebooks compare retrieval strategies on the same labeled questions, then build an agent that diagnoses why a search fell short and picks its next step from that diagnosis.
 
-### WHAT TO SUBMIT
-Upload the entire project folder (DADA2) via GitHub integration on Canvas
+## How it works
 
-### Write-up
+Gemini writes the search queries, plans and answers. Cloudflare's `clef-flash` decision model classifies each question and judges whether the retrieved passages answer it. Pinecone holds the chunk embeddings and filters them by company and fiscal year, and BM25 adds exact-term matches for comparative questions. Cohere reranks the strongest search. Questions about a reported figure can read the supplied XBRL financial data instead of the prose.
 
-Paste the write-up from notebook 04 (TODO 4.3) here, under the same five
-headings.
+## Evaluation
 
 **Conditions.** The chat model and the judge are `gemini-3.5-flash-lite`, and the decision model is `clef-flash`. The embeddings are `@cf/qwen/qwen3-embedding-0.6b` on Cloudflare (1024 dimensions), in the Pinecone index `dada2-1024`. The reranker is Cohere `rerank-v3.5`. The 27 section files make 2,124 chunks of up to 1,200 characters, with an overlap of 150. Retrieval uses k=5, a rerank pool of 10 and an RRF constant of 60. The router test uses all 24 labeled questions. The agent test uses the first 8 specific and the first 6 comparative questions, with one run of each agent.
 
