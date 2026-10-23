@@ -13,7 +13,8 @@ What it does:
 - Renders each tool call as a collapsible entry (Gradio does this automatically
   for any ChatMessage whose metadata has a "title").
 - Leaves conversation memory to the agent's checkpointer: because the same
-  thread_id is sent on every turn, the graph itself remembers the conversation.
+  thread_id is sent on every turn of a browser session, the graph itself
+  remembers the conversation. Each session (page load) gets its own thread.
   Gradio's visible history is display-only.
 
 Requires: gradio >= 5 (`uv pip install gradio`), a compiled LangGraph agent
@@ -44,22 +45,32 @@ def _text_of(message) -> str:
 class GradioUI:
     def __init__(self, agent, config=None, title="LangGraph Agent", description=None):
         self.agent = agent
-        # If no config is given, make a fresh conversation thread for this session.
-        self.config = config or {"configurable": {"thread_id": uuid.uuid4().hex}}
+        # A config passed in is used for every turn (one fixed thread).
+        # With no config, each browser session gets its own thread; see _config_for.
+        self.config = config
         self.title = title
         self.description = description
+
+    def _config_for(self, request):
+        """One LangGraph thread per Gradio session. Gradio gives each page load
+        its own session_hash, so turns in one tab share memory, other tabs and
+        other visitors do not, and a reload starts a new thread."""
+        if self.config:
+            return self.config
+        session = getattr(request, "session_hash", None) or uuid.uuid4().hex
+        return {"configurable": {"thread_id": session}}
 
     # ------------------------------------------------------------------
     # The chat function Gradio calls on every user turn.
     # It is a *generator*: each `yield` updates the UI, which is how the
     # tool-call entries show up before the final answer is ready.
     # ------------------------------------------------------------------
-    def _chat(self, user_message, history):
+    def _chat(self, user_message, history, request: gr.Request = None):
         shown = []
 
         stream = self.agent.stream(
             {"messages": [HumanMessage(content=user_message)]},
-            self.config,
+            self._config_for(request),   # Gradio fills request from the annotation
             stream_mode="updates",  # one update per graph node that ran
         )
 
