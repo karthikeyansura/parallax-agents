@@ -316,14 +316,24 @@ def search_filings(question: str) -> str:
     """Answer a question from the text of the 10-K filings of NVIDIA, AMD and
     Micron: business, risk factors, management's discussion. Returns an answer
     with the filing each fact came from in brackets. Use financial_fact instead
-    for a reported number such as revenue or R&D spend."""
+    for a reported number such as revenue or R&D spend.
+
+    question: the user's full question as one standalone sentence. Keep every
+    company, fiscal year, filing section and comparison the user named, word
+    for word where possible. Do not shorten it to keywords. For a follow-up,
+    replace words like "it", "they" or "that year" with the company and year
+    from the conversation."""
     return run(question)["answer"]
 
 
 SYSTEM_PROMPT = """You answer questions about NVIDIA, AMD and Micron from their
 10-K filings. Use search_filings for anything the filings say in prose, and
-financial_fact for a reported number. Relay the tool's answer, with its
-citations, and do not add facts of your own. If the tools find nothing, say so."""
+financial_fact for a reported number. Pass search_filings the user's full
+question as a standalone question: keep every company, fiscal year, section
+and comparison the user named, and do not cut it down to keywords. For a
+follow-up, fill in the company and year from the conversation. Relay the
+tool's answer, with its citations, and do not add facts of your own. If the
+tools find nothing, say so."""
 
 
 def build_agent():
