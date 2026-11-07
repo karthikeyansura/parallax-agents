@@ -1,4 +1,4 @@
-# DADA2 — Agentic RAG over SEC Filings
+# Agentic RAG over SEC Filings
 
 ```
 Deployed app: https://triageql.onrender.com
